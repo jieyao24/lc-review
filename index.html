@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>开背！LC 速查</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f3; --bg3: #eeede8;
+    --text: #1a1a18; --text2: #6b6a63; --text3: #9c9a92;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+    --success: #3b6d11; --success-bg: #eaf3de;
+    --warning: #854f0b; --warning-bg: #faeeda;
+    --info: #185fa5; --info-bg: #e6f1fb;
+    --radius: 8px; --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1e1c; --bg2: #2a2a28; --bg3: #333330;
+      --text: #e8e6dc; --text2: #9c9a92; --text3: #6b6a63;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+      --success: #97c459; --success-bg: #1a2e08;
+      --warning: #ef9f27; --warning-bg: #2a1f08;
+      --info: #85b7eb; --info-bg: #071e36;
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; }
+  #app { max-width: 860px; margin: 0 auto; padding: 24px 16px; }
+
+  /* Header */
+  .app-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .app-title { font-size: 18px; font-weight: 500; flex: 1; }
+  .sync-status { font-size: 12px; color: var(--text3); display: flex; align-items: center; gap: 6px; }
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); }
+  .sync-dot.ok { background: var(--success); }
+  .sync-dot.err { background: #e24b4a; }
+  .sync-dot.loading { background: var(--warning); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab { background: transparent; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 6px 14px; font-size: 13px; cursor: pointer; color: var(--text); transition: background 0.15s; }
+  .tab:hover { background: var(--bg2); }
+  .tab.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  /* Stats */
+  .stats-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .stat-card { background: var(--bg2); border-radius: var(--radius); padding: 10px 14px; flex: 1; min-width: 72px; }
+  .stat-val { font-size: 22px; font-weight: 500; }
+  .stat-lbl { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  /* Tags */
+  .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
+  .tag-mastered { background: var(--success-bg); color: var(--success); }
+  .tag-shaky    { background: var(--warning-bg); color: var(--warning); }
+  .tag-new      { background: var(--bg3); color: var(--text2); }
+  .tag-instant  { background: var(--info-bg); color: var(--info); }
+
+  /* Buttons */
+  .btn { background: transparent; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 6px 14px; font-size: 13px; cursor: pointer; color: var(--text); transition: background 0.15s; }
+  .btn:hover { background: var(--bg2); }
+  .btn.active, .btn.selected { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .btn-primary:hover { opacity: 0.85; }
+
+  /* List view */
+  .list-controls { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+  .problem-list { display: flex; flex-direction: column; gap: 5px; }
+  .problem-row { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 10px 14px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: border-color 0.15s; }
+  .problem-row:hover { border-color: var(--border2); }
+  .problem-num { font-size: 12px; color: var(--text2); min-width: 32px; }
+  .problem-name { font-size: 13px; font-weight: 500; flex: 1; }
+  .problem-hint { font-size: 12px; color: var(--text2); flex: 2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .problem-date { font-size: 11px; color: var(--text3); min-width: 72px; text-align: right; }
+
+  /* Drawer */
+  .drawer { background: var(--bg2); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px; margin-top: 4px; display: none; }
+  .drawer.open { display: block; }
+  .drawer-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+  .drawer-section { margin-bottom: 14px; }
+  .drawer-section p { font-size: 13px; line-height: 1.55; }
+  .code-block { font-family: 'SF Mono', Menlo, monospace; font-size: 12px; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 10px 12px; white-space: pre-wrap; line-height: 1.6; }
+  .mastery-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* Flashcard */
+  .fc-top { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+  .fc-progress { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; font-size: 12px; color: var(--text2); }
+  .fc-bar-wrap { flex: 1; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .fc-bar-fill { height: 100%; background: var(--text); border-radius: 2px; transition: width 0.3s; }
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 24px; min-height: 200px; cursor: pointer; transition: border-color 0.15s; }
+  .card:hover { border-color: var(--border2); }
+  .card-lbl { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .card-num { font-size: 28px; font-weight: 500; margin-bottom: 4px; }
+  .card-name { font-size: 16px; margin-bottom: 14px; }
+  .kw-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .kw-chip { font-size: 11px; padding: 3px 8px; border-radius: 20px; background: var(--bg2); color: var(--text2); border: 0.5px solid var(--border); }
+  .flip-hint { font-size: 12px; color: var(--text3); margin-top: 16px; }
+  .answer-section { margin-bottom: 14px; }
+  .answer-section h4 { font-size: 11px; color: var(--text2); margin-bottom: 5px; }
+  .answer-section p { font-size: 13px; line-height: 1.55; }
+  .fc-actions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; align-items: center; }
+  .fc-nav { display: flex; gap: 8px; margin-top: 12px; }
+
+  /* Toast */
+  #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 8px 18px; border-radius: 20px; font-size: 13px; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 100; }
+  #toast.show { opacity: 1; }
+
+  input[type=text] { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 6px 10px; font-size: 13px; color: var(--text); outline: none; }
+  input[type=text]:focus { border-color: var(--border2); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="app-header">
+    <div class="app-title">开背！LC 速查</div>
+    <div class="sync-status">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span id="sync-text">未同步</span>
+    </div>
+    <button class="btn btn-sm" onclick="syncFromSheet()">↻ 从 Sheet 同步</button>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tab-list"      onclick="setView('list')">题库</button>
+    <button class="tab"        id="tab-flashcard" onclick="setView('flashcard')">闪卡复习</button>
+  </div>
+
+  <div class="stats-row" id="stats-row"></div>
+
+  <!-- LIST -->
+  <div id="view-list">
+    <div class="list-controls">
+      <button class="btn btn-sm active" onclick="setFilter('all',this)">全部</button>
+      <button class="btn btn-sm" onclick="setFilter('new',this)">未评</button>
+      <button class="btn btn-sm" onclick="setFilter('shaky',this)">会卡壳</button>
+      <button class="btn btn-sm" onclick="setFilter('instant',this)">秒懂</button>
+      <button class="btn btn-sm" onclick="setFilter('mastered',this)">自动化</button>
+      <input type="text" id="search" placeholder="搜索…" oninput="renderList()" style="flex:1;min-width:120px">
+    </div>
+    <div class="problem-list" id="problem-list"></div>
+  </div>
+
+  <!-- FLASHCARD -->
+  <div id="view-flashcard" style="display:none">
+    <div class="fc-top">
+      <span style="font-size:13px;color:var(--text2)">复习范围：</span>
+      <button class="btn btn-sm active" onclick="setFcFilter('all',this)">全部</button>
+      <button class="btn btn-sm" onclick="setFcFilter('new',this)">未评</button>
+      <button class="btn btn-sm" onclick="setFcFilter('shaky',this)">会卡壳</button>
+      <button class="btn btn-sm" style="margin-left:auto" onclick="shuffleFc()">🔀 打乱</button>
+    </div>
+    <div class="fc-progress">
+      <span id="fc-counter">0 / 0</span>
+      <div class="fc-bar-wrap"><div class="fc-bar-fill" id="fc-bar" style="width:0%"></div></div>
+    </div>
+    <div id="fc-container"></div>
+    <div class="fc-nav">
+      <button class="btn" onclick="fcNav(-1)">← 上一题</button>
+      <button class="btn" onclick="fcNav(1)">下一题 →</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzE9GQTCcSa8_GsB92wRSklRBOn1TUg9Jl1BgaKBzTBJU638xyjlP49LXQmYhUkNqMQ/exec';
+
+const MASTERY_LABEL = { new:'未评', shaky:'会卡壳', instant:'秒懂', mastered:'自动化' };
+const MASTERY_FROM_SHEET = { '会卡壳':'shaky', '秒懂':'instant', '自动化':'mastered' };
+const MASTERY_TO_SHEET   = { shaky:'会卡壳', instant:'秒懂', mastered:'自动化', new:'' };
+const MASTERY_TAG = { new:'tag-new', shaky:'tag-shaky', instant:'tag-instant', mastered:'tag-mastered' };
+
+let problems = JSON.parse(localStorage.getItem('lc_problems') || '[]');
+let currentFilter = 'all';
+let fcQueue = [], fcIdx = 0, fcFlipped = false, fcFilter = 'all';
+
+/* ── Sync ── */
+function setSyncState(state, msg) {
+  const dot = document.getElementById('sync-dot');
+  const txt = document.getElementById('sync-text');
+  dot.className = 'sync-dot ' + state;
+  txt.textContent = msg;
+}
+
+async function syncFromSheet() {
+  setSyncState('loading', '同步中…');
+  try {
+    const res = await fetch(SCRIPT_URL + '?action=getAll');
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    problems = data.rows.map((r, i) => ({
+      id: i,
+      rowIndex: r.rowIndex,
+      title: r.title,
+      hint: r.hint,
+      keywords: r.keywords,
+      code: r.code,
+      mastery: MASTERY_FROM_SHEET[r.mastery] || 'new',
+      date: r.date,
+    }));
+    save();
+    setSyncState('ok', '已同步 ' + new Date().toLocaleTimeString());
+    toast('✓ 从 Sheet 加载了 ' + problems.length + ' 道题');
+    renderAll();
+  } catch(e) {
+    setSyncState('err', '同步失败');
+    toast('同步失败：' + e.message);
+  }
+}
+
+async function pushToSheet(problem) {
+  try {
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        action: 'updateRow',
+        rowIndex: problem.rowIndex,
+        mastery: MASTERY_TO_SHEET[problem.mastery],
+        date: problem.date,
+      })
+    });
+  } catch(e) {
+    toast('写入 Sheet 失败：' + e.message);
+  }
+}
+
+/* ── Data ── */
+function save() { localStorage.setItem('lc_problems', JSON.stringify(problems)); }
+
+function setMastery(id, m, fromFc) {
+  const p = problems.find(x => x.id === id);
+  if (!p) return;
+  p.mastery = m;
+  p.date = new Date().toISOString().slice(0, 10);
+  save();
+  pushToSheet(p);
+  renderStats();
+  if (fromFc) { setTimeout(() => fcNav(1), 250); }
+  else { renderList(); }
+}
+
+/* ── UI helpers ── */
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+function getTag(m) {
+  return `<span class="tag ${MASTERY_TAG[m]}">${MASTERY_LABEL[m]}</span>`;
+}
+
+function renderAll() { renderStats(); renderList(); if (document.getElementById('view-flashcard').style.display !== 'none') buildFcQueue(); }
+
+/* ── Stats ── */
+function renderStats() {
+  const c = { total: problems.length, mastered: 0, instant: 0, shaky: 0, new: 0 };
+  problems.forEach(p => c[p.mastery] = (c[p.mastery] || 0) + 1);
+  document.getElementById('stats-row').innerHTML = `
+    <div class="stat-card"><div class="stat-val">${c.total}</div><div class="stat-lbl">总题数</div></div>
+    <div class="stat-card"><div class="stat-val">${c.mastered||0}</div><div class="stat-lbl">自动化</div></div>
+    <div class="stat-card"><div class="stat-val">${c.instant||0}</div><div class="stat-lbl">秒懂</div></div>
+    <div class="stat-card"><div class="stat-val">${c.shaky||0}</div><div class="stat-lbl">会卡壳</div></div>
+    <div class="stat-card"><div class="stat-val">${c.new||0}</div><div class="stat-lbl">未评</div></div>`;
+}
+
+/* ── List ── */
+function renderList() {
+  const search = (document.getElementById('search')?.value || '').toLowerCase();
+  const filtered = problems.filter(p => {
+    if (currentFilter !== 'all' && p.mastery !== currentFilter) return false;
+    if (search && ![p.title, p.hint, p.keywords].some(s => s.toLowerCase().includes(search))) return false;
+    return true;
+  });
+  const el = document.getElementById('problem-list');
+  if (!filtered.length) { el.innerHTML = '<p style="font-size:13px;color:var(--text2);padding:12px 0">没有匹配题目</p>'; return; }
+  el.innerHTML = filtered.map(p => {
+    const num  = (p.title.match(/^(\d+)/) || ['',''])[1];
+    const name = p.title.replace(/^\d+\.\s*/, '');
+    return `<div>
+      <div class="problem-row" onclick="toggleDrawer(${p.id})">
+        <span class="problem-num">${num}</span>
+        <span class="problem-name">${name}</span>
+        <span class="problem-hint">${p.hint}</span>
+        ${getTag(p.mastery)}
+        <span class="problem-date">${fmtDate(p.date)}</span>
+      </div>
+      <div class="drawer" id="drawer-${p.id}">
+        <div class="drawer-section"><div class="drawer-label">一句话思路</div><p>${p.hint}</p></div>
+        <div class="drawer-section"><div class="drawer-label">英文口语关键词</div><p>${p.keywords}</p></div>
+        <div class="drawer-section"><div class="drawer-label">核心代码 / 关键点</div><div class="code-block">${escHtml(p.code)}</div></div>
+        <div class="drawer-section">
+          <div class="drawer-label">熟练度</div>
+          <div class="mastery-row">
+            ${Object.entries(MASTERY_LABEL).map(([k,v]) =>
+              `<button class="btn btn-sm ${p.mastery===k?'selected':''}" onclick="setMastery(${p.id},'${k}',false)">${v}</button>`
+            ).join('')}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleDrawer(id) {
+  const el = document.getElementById('drawer-' + id);
+  if (!el) return;
+  const open = el.classList.contains('open');
+  document.querySelectorAll('.drawer.open').forEach(d => d.classList.remove('open'));
+  if (!open) el.classList.add('open');
+}
+
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function fmtDate(s) {
+  if (!s) return '';
+  const d = new Date(s);
+  if (isNaN(d)) return s;
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('#view-list .btn-sm').forEach(b => b.classList.remove('active'));
+  btn && btn.classList.add('active');
+  renderList();
+}
+
+/* ── Flashcard ── */
+function buildFcQueue() {
+  fcQueue = fcFilter === 'all' ? [...problems] : problems.filter(p => p.mastery === fcFilter);
+  fcIdx = 0; fcFlipped = false; renderFc();
+}
+function setFcFilter(f, btn) {
+  fcFilter = f;
+  document.querySelectorAll('.fc-top .btn-sm').forEach(b => b.classList.remove('active'));
+  btn && btn.classList.add('active');
+  buildFcQueue();
+}
+function shuffleFc() {
+  for (let i = fcQueue.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i+1));
+    [fcQueue[i], fcQueue[j]] = [fcQueue[j], fcQueue[i]];
+  }
+  fcIdx = 0; fcFlipped = false; renderFc();
+}
+function fcNav(d) { fcIdx = Math.max(0, Math.min(fcQueue.length-1, fcIdx+d)); fcFlipped = false; renderFc(); }
+
+function renderFc() {
+  const container = document.getElementById('fc-container');
+  const counter   = document.getElementById('fc-counter');
+  const bar       = document.getElementById('fc-bar');
+  if (!fcQueue.length) {
+    container.innerHTML = '<div class="card"><p style="font-size:13px;color:var(--text2)">没有题目，请先同步 Sheet</p></div>';
+    counter.textContent = '0 / 0'; bar.style.width = '0%'; return;
+  }
+  const p = fcQueue[fcIdx];
+  counter.textContent = `${fcIdx+1} / ${fcQueue.length}`;
+  bar.style.width = `${Math.round((fcIdx+1)/fcQueue.length*100)}%`;
+  if (!fcFlipped) {
+    container.innerHTML = `
+      <div class="card" onclick="fcFlip()">
+        <div class="card-lbl">题目</div>
+        <div class="card-num">${(p.title.match(/^(\d+)/)||['',''])[1]}</div>
+        <div class="card-name">${p.title.replace(/^\d+\.\s*/,'')}</div>
+        <div class="kw-chips">${p.keywords.split(',').map(k=>`<span class="kw-chip">${k.trim()}</span>`).join('')}</div>
+        ${getTag(p.mastery)}
+        <div class="flip-hint">点击翻面查看答案 →</div>
+      </div>`;
+  } else {
+    container.innerHTML = `
+      <div class="card" onclick="fcFlip()">
+        <div class="card-lbl">答案</div>
+        <div class="answer-section"><h4>一句话思路</h4><p>${p.hint}</p></div>
+        <div class="answer-section"><h4>核心代码</h4><div class="code-block">${escHtml(p.code)}</div></div>
+        <div style="margin-top:12px">
+          <div class="card-lbl" style="margin-bottom:6px">更新熟练度（自动同步到 Sheet）</div>
+          <div class="mastery-row">
+            ${Object.entries(MASTERY_LABEL).map(([k,v]) =>
+              `<button class="btn btn-sm ${p.mastery===k?'selected':''}" onclick="event.stopPropagation();setMastery(${p.id},'${k}',true)">${v}</button>`
+            ).join('')}
+          </div>
+        </div>
+      </div>`;
+  }
+}
+function fcFlip() { fcFlipped = !fcFlipped; renderFc(); }
+
+/* ── View switch ── */
+function setView(v) {
+  ['list','flashcard'].forEach(x => {
+    document.getElementById('view-'+x).style.display = x===v ? 'block' : 'none';
+    document.getElementById('tab-'+x).classList.toggle('active', x===v);
+  });
+  if (v === 'flashcard') buildFcQueue();
+  if (v === 'list') renderList();
+}
+
+/* ── Init ── */
+renderStats();
+renderList();
+if (problems.length === 0) {
+  setSyncState('loading', '首次加载，同步中…');
+  syncFromSheet();
+} else {
+  setSyncState('ok', '本地缓存 ' + problems.length + ' 题');
+}
+</script>
+</body>
+</html>
