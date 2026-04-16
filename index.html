@@ -52,10 +52,12 @@
 
   /* Tags */
   .tag { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
-  .tag-mastered { background: var(--success-bg); color: var(--success); }
-  .tag-shaky    { background: var(--warning-bg); color: var(--warning); }
-  .tag-new      { background: var(--bg3); color: var(--text2); }
-  .tag-instant  { background: var(--info-bg); color: var(--info); }
+  .tag-mastered  { background: var(--success-bg); color: var(--success); }
+  .tag-shaky     { background: var(--warning-bg); color: var(--warning); }
+  .tag-new       { background: var(--bg3); color: var(--text2); }
+  .tag-instant   { background: var(--info-bg); color: var(--info); }
+  .tag-forgotten { background: #fcebeb; color: #a32d2d; }
+  @media (prefers-color-scheme: dark) { .tag-forgotten { background: #2a0f0f; color: #f09595; } }
 
   /* Buttons */
   .btn { background: transparent; border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 6px 14px; font-size: 13px; cursor: pointer; color: var(--text); transition: background 0.15s; }
@@ -134,6 +136,7 @@
     <div class="list-controls">
       <button class="btn btn-sm active" onclick="setFilter('all',this)">全部</button>
       <button class="btn btn-sm" onclick="setFilter('new',this)">未评</button>
+      <button class="btn btn-sm" onclick="setFilter('forgotten',this)">完全忘光</button>
       <button class="btn btn-sm" onclick="setFilter('shaky',this)">会卡壳</button>
       <button class="btn btn-sm" onclick="setFilter('instant',this)">秒懂</button>
       <button class="btn btn-sm" onclick="setFilter('mastered',this)">自动化</button>
@@ -148,6 +151,7 @@
       <span style="font-size:13px;color:var(--text2)">复习范围：</span>
       <button class="btn btn-sm active" onclick="setFcFilter('all',this)">全部</button>
       <button class="btn btn-sm" onclick="setFcFilter('new',this)">未评</button>
+      <button class="btn btn-sm" onclick="setFcFilter('forgotten',this)">完全忘光</button>
       <button class="btn btn-sm" onclick="setFcFilter('shaky',this)">会卡壳</button>
       <button class="btn btn-sm" style="margin-left:auto" onclick="shuffleFc()">🔀 打乱</button>
     </div>
@@ -168,10 +172,10 @@
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzE9GQTCcSa8_GsB92wRSklRBOn1TUg9Jl1BgaKBzTBJU638xyjlP49LXQmYhUkNqMQ/exec';
 
-const MASTERY_LABEL = { new:'未评', shaky:'会卡壳', instant:'秒懂', mastered:'自动化' };
-const MASTERY_FROM_SHEET = { '会卡壳':'shaky', '秒懂':'instant', '自动化':'mastered' };
-const MASTERY_TO_SHEET   = { shaky:'会卡壳', instant:'秒懂', mastered:'自动化', new:'' };
-const MASTERY_TAG = { new:'tag-new', shaky:'tag-shaky', instant:'tag-instant', mastered:'tag-mastered' };
+const MASTERY_LABEL = { new:'未评', forgotten:'完全忘光', shaky:'会卡壳', instant:'秒懂', mastered:'自动化' };
+const MASTERY_FROM_SHEET = { '会卡壳':'shaky', '秒懂':'instant', '自动化':'mastered', '完全忘光':'forgotten' };
+const MASTERY_TO_SHEET   = { shaky:'会卡壳', instant:'秒懂', mastered:'自动化', forgotten:'完全忘光', new:'' };
+const MASTERY_TAG = { new:'tag-new', forgotten:'tag-forgotten', shaky:'tag-shaky', instant:'tag-instant', mastered:'tag-mastered' };
 
 let problems = JSON.parse(localStorage.getItem('lc_problems') || '[]');
 let currentFilter = 'all';
@@ -258,13 +262,14 @@ function renderAll() { renderStats(); renderList(); if (document.getElementById(
 
 /* ── Stats ── */
 function renderStats() {
-  const c = { total: problems.length, mastered: 0, instant: 0, shaky: 0, new: 0 };
+  const c = { total: problems.length, mastered: 0, instant: 0, shaky: 0, forgotten: 0, new: 0 };
   problems.forEach(p => c[p.mastery] = (c[p.mastery] || 0) + 1);
   document.getElementById('stats-row').innerHTML = `
     <div class="stat-card"><div class="stat-val">${c.total}</div><div class="stat-lbl">总题数</div></div>
     <div class="stat-card"><div class="stat-val">${c.mastered||0}</div><div class="stat-lbl">自动化</div></div>
     <div class="stat-card"><div class="stat-val">${c.instant||0}</div><div class="stat-lbl">秒懂</div></div>
     <div class="stat-card"><div class="stat-val">${c.shaky||0}</div><div class="stat-lbl">会卡壳</div></div>
+    <div class="stat-card"><div class="stat-val">${c.forgotten||0}</div><div class="stat-lbl">完全忘光</div></div>
     <div class="stat-card"><div class="stat-val">${c.new||0}</div><div class="stat-lbl">未评</div></div>`;
 }
 
